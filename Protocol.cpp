@@ -16,6 +16,34 @@ int unpack_int(unsigned char* buf) {
     return i;
 }
 
+void pack(unsigned char*) {}
+
+void dopack(int i, unsigned char* buf) {
+    *buf++ = i >> 24 & 0xFF;
+    *buf++ = i >> 16 & 0xFF;
+    *buf++ = i >> 8 & 0xFF;
+    *buf++ = i & 0xFF;
+}
+
+template <class... Tail>
+void pack(unsigned char*& buf, std::string str, Tail... tail) {
+    memcpy(buf, str.c_str(), str.size() + 1);
+    buf += str.size() + 1;
+    pack(buf, tail...);
+}
+
+template <class Head, class... Tail>
+void pack(unsigned char*& buf, Head head, Tail... tail) {
+    dopack(head, buf);
+    buf += sizeof(head);
+    pack(buf, tail...);
+}
+
+template <class... Args>
+void pack(char*& buf, Args... args) {
+    pack((unsigned char*&)buf, args...);
+}
+
 struct Protocol::MessageHeader Protocol::buildHeader(
     Protocol::MessageHeader::MsgType type, const int data_len) {
     struct Protocol::MessageHeader header;
@@ -27,11 +55,7 @@ struct Protocol::MessageHeader Protocol::buildHeader(
 
 void Protocol::packHeader(const struct Protocol::MessageHeader& header,
                           char* buf) {
-    pack_int(header.magic_start, (unsigned char*)buf);
-    buf += 4;
-    pack_int(header.data_len, (unsigned char*)buf);
-    buf += 4;
-    pack_int(header.type, (unsigned char*)buf);
+    pack(buf, header.magic_start, header.data_len, header.type);
 }
 
 struct Protocol::MessageHeader Protocol::unpackHeader(const char* buf) {
@@ -52,21 +76,15 @@ int Protocol::calculatePackedRoomListSize(
     for (auto const& chatroom : chatrooms) {
         title_total_len += chatroom.second->getTitle().size() + 1;
     }
-    return title_total_len + (sizeof(int) * 2) * count + sizeof(int); // count
+    return title_total_len + (sizeof(int) * 2) * count + sizeof(int);  // count
 }
 
 void Protocol::packChatRoomList(
     std::map<int, std::shared_ptr<ChatRoom>> const& chatrooms, char* buf) {
-    pack_int(chatrooms.size(), (unsigned char*)buf);
-    buf += 4;
+    pack(buf, (int)chatrooms.size());
     for (auto const& chatroom : chatrooms) {
-        pack_int(chatroom.first, (unsigned char*)buf);
-        buf += 4;
         int title_len = chatroom.second->getTitle().size() + 1;
-        pack_int(title_len, (unsigned char*)buf);
-        buf += 4;
-        memcpy(buf, chatroom.second->getTitle().c_str(), title_len);
-        buf += title_len;
+        pack(buf, chatroom.first, title_len, chatroom.second->getTitle());
     }
 }
 
@@ -82,7 +100,7 @@ std::map<int, Protocol::ChatRoomData> Protocol::unpackChatRoomList(
         int title_len = unpack_int((unsigned char*)buf);
         buf += 4;
         while (title_len--) chatroom.title.push_back(*buf++);
-        chatrooms[chatroom.rid ]=chatroom;
+        chatrooms[chatroom.rid] = chatroom;
     }
 
     return std::move(chatrooms);
