@@ -53,6 +53,7 @@ void registerUser(Socket &sock, const char *nickname) {
 
 void processMessage(Socket &sock, const struct Protocol::MessageHeader header,
                     const char *data) {
+    cout << "server: message type " << header.type << endl;
     switch (header.type) {
         case Protocol::MessageHeader::MsgType::REGISTER:
             registerUser(sock, data);

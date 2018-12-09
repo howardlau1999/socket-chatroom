@@ -5,7 +5,9 @@ Me learning socket API through practice :-p
 # Build & Run
 
 ```bash
-make server client
+mkdir build
+cd build
+cmake .. && make
 ```
 
 Start server by:

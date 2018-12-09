@@ -5,9 +5,7 @@ ChatRoom::ChatRoom(std::string title) : title(title), id(count++) {}
 
 void ChatRoom::postMessage(int uid, std::string const& message) {
     for (auto& pair : users) {
-        if (pair.first != uid && pair.second) {
-            pair.second->notifyMessage(users[uid], message);
-        }
+        pair.second->notifyMessage(users[uid], message);
     }
 }
 

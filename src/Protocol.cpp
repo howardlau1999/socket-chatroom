@@ -2,12 +2,6 @@
 
 #include <string.h>
 
-void pack_int(unsigned long int i, unsigned char* buf) {
-    *buf++ = i >> 24;
-    *buf++ = i >> 16;
-    *buf++ = i >> 8;
-    *buf++ = i;
-}
 
 int unpack_int(unsigned char* buf) {
     unsigned long int i = ((unsigned long int)buf[0] << 24) |
