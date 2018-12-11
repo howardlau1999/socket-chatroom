@@ -78,9 +78,9 @@ void prompt(int client_fd) {
             wprintw(footer, "%s @ %s> ", nickname.c_str(),
                     chatrooms[rid].title.c_str());
         wrefresh(footer);
+
         char buf[100];
         wgetstr(footer, buf);
-
         if (rid < 0) {
             int join_rid = atoi(buf);
             joinChatroom(client_fd, join_rid);
@@ -95,7 +95,7 @@ void processMessage(Socket &sock, const struct Protocol::MessageHeader header,
     switch (header.type) {
         case Protocol::MessageHeader::MsgType::SET_UID:
             uid = *((int *)data);
-            printMessage("client: set uid %d\n", uid);
+            printMessage("Your uid: %d\n", uid);
             break;
         case Protocol::MessageHeader::MsgType::CHAT_MESSAGE:
             printMessage("%s\n", data);
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
 
     registerUser(client_fd, argv[2]);
     requestChatroomList(client_fd);
-
+    
     while (true) {
         int event_count =
             epoll_wait(epoll_fd, events, MAX_EVENTS, EPOLL_TIMEOUT);
@@ -216,7 +216,6 @@ int main(int argc, char *argv[]) {
             struct Protocol::Message msg = sock.recvMessage();
             processMessage(sock, msg.header, msg.data);
             delete[] msg.data;
-            refresh();
         }
     }
 

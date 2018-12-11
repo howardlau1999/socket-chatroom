@@ -2,6 +2,25 @@
 
 Socket::Socket(const int fd) : fd(fd) {} 
 
+void Socket::setNonBlocking() {
+    using namespace std;
+    int opts;
+    if ((opts = fcntl(fd, F_GETFL)) < 0) {
+        cerr << "GETFL failed" << endl;
+        exit(1);
+    }
+    opts = opts | O_NONBLOCK;
+    if (fcntl(fd, F_SETFL, opts) < 0) {
+        cerr << "SETFL failed" << endl;
+        exit(1);
+    }
+}
+
+void Socket::setAsync(int epoll_fd) {
+    setNonBlocking();
+    epoll_fd = epoll_fd;
+}
+
 void Socket::sendAll(const char* buf, const int size) {
     int sent = 0;
     while (sent < size) {
@@ -23,7 +42,6 @@ void Socket::recvAll(char* buf, const int size) {
             perror("recv");
             return;
         }
-
         received += chunk;
         buf += chunk;
     }
